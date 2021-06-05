@@ -64,29 +64,51 @@ class Bot:
 
     def start_test_handler(self, update: Update, context: CallbackContext):
         if "dict" not in context.user_data.keys():
-            update.effective_message.reply_text(Strings.WRONG_WORD, parse_mode="HTML")
+            update.effective_message.reply_text(Strings.EMPTY, parse_mode="HTML")
             return
         update.effective_message.reply_text(Strings.START_TEST, parse_mode="HTML")
-        pos = random.choice([0, 1])
-        current = random.choice(context.user_data["dict"])
-        context.user_data["right"] = current[1 - pos]
-        update.effective_message.reply_text(current[pos])
+        context.user_data["cur"] = context.user_data["dict"]
+        random.shuffle(context.user_data["cur"])
+        context.user_data["test_q"] = []
+        context.user_data["test_a"] = []
+        for word in context.user_data["cur"]:
+            pos = random.randint(0, 1)
+            context.user_data["test_q"].append(word[pos])
+            context.user_data["test_a"].append(word[1 - pos])
+
+        context.user_data["cur"] = 0
+        context.user_data['right'] = 0
+        context.user_data['wrong'] = 0
+        update.effective_message.reply_text(context.user_data["test_q"][0])
         return States.WAITING_ANSWER
 
     def answer_handler(self, update: Update, context: CallbackContext):
         mess = update.effective_message.text
-        if mess.lower() == context.user_data["right"].lower():
+        if mess.lower() == context.user_data["test_a"][context.user_data['cur']].lower():
             update.effective_message.reply_text(Strings.RIGHT, parse_mode="HTML")
-            pos = random.choice([0, 1])
-            current = random.choice(context.user_data["dict"])
-            context.user_data["right"] = current[1 - pos]
-            update.effective_message.reply_text(current[pos])
+            context.user_data["cur"] += 1
+            context.user_data['right'] += 1
+            if context.user_data["cur"] == len(context.user_data["test_q"]):
+                update.effective_message.reply_text(f"{Strings.FINISH_TEST}\n{context.user_data['right']} правильных ответов\n{context.user_data['wrong']} неправильных ответов\nМолодец!", parse_mode='HTML')
+                context.user_data['right'] = 0
+                context.user_data['wrong'] = 0
+                context.user_data['test_q'] = []
+                context.user_data['test_a'] = []
+                context.user_data['cur'] = 0
+                return ConversationHandler.END
+            update.effective_message.reply_text(context.user_data["test_q"][context.user_data['cur']])
         else:
             update.effective_message.reply_text(Strings.WRONG, parse_mode="HTML")
+            context.user_data['wrong'] += 1
         return States.WAITING_ANSWER
 
-    def cancel_handler(self, update: Update, _: CallbackContext):
+    def cancel_handler(self, update: Update, context: CallbackContext):
         update.effective_message.reply_text(Strings.OperationCancelled)
+        context.user_data['right'] = 0
+        context.user_data['wrong'] = 0
+        context.user_data['test_q'] = []
+        context.user_data['test_a'] = []
+        context.user_data['cur'] = 0
         return ConversationHandler.END
 
     def run(self):
