@@ -89,7 +89,7 @@ class Bot:
             context.user_data["cur"] += 1
             context.user_data['right'] += 1
             if context.user_data["cur"] == len(context.user_data["test_q"]):
-                update.effective_message.reply_text(f"{Strings.FINISH_TEST}\n{context.user_data['right']} правильных ответов\n{context.user_data['wrong']} неправильных ответов\nМолодец!", parse_mode='HTML')
+                update.effective_message.reply_text(f"{Strings.FINISH_TEST}\nКоличество правильных ответов: {context.user_data['right']}\nКоличество неправильных ответов: {context.user_data['wrong']}\nМолодец!", parse_mode='HTML')
                 context.user_data['right'] = 0
                 context.user_data['wrong'] = 0
                 context.user_data['test_q'] = []
